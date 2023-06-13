@@ -39,6 +39,7 @@ class Handles(commands.Cog):
     def make_handle_embed(self, ctx):
         desc = "Information about Handle related commands! **[use .handle <command>]**\n\n"
         handle = self.client.get_command('handle')
+        print("hi")
         for cmd in handle.commands:
             desc += f"`{cmd.name}`: **{cmd.brief}**\n"
         embed = discord.Embed(description=desc, color=discord.Color.dark_magenta())
@@ -221,5 +222,5 @@ class Handles(commands.Cog):
         await paginator.Paginator(data, ["User", "Handle", "Rating"], f"Handle List", HANDLES_PER_PAGE).paginate(ctx, self.client)
 
 
-def setup(client):
-    client.add_cog(Handles(client))
+async def setup(client):
+    await client.add_cog(Handles(client))

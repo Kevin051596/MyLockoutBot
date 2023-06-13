@@ -13,6 +13,7 @@ from data import dbconn
 
 db = dbconn.DbConn()
 cf = cf_api.CodeforcesAPI()
+QUESTIONS = 5
 
 
 class DummyUser:
@@ -155,11 +156,11 @@ def match_problems_embed(match_info):
     a, b = match_score(match_info.status)
     problems = match_info.problems.split()
 
-    points = [f"{100 * (i + 1)}" for i in range(5)]
+    points = [f"{100 * (i + 1)}" for i in range(QUESTIONS)]
     names = [f"[{db.get_problems(problems[i])[0].name}](https://codeforces.com/contest/{problems[i].split('/')[0]}"
              f"/problem/{problems[i].split('/')[1]})" if match_info.status[i] == '0' else "This problem has been solved"
-             for i in range(5)]
-    rating = [f"{match_info.rating + i * 100}" for i in range(5)]
+             for i in range(QUESTIONS)]
+    rating = [f"{match_info.rating + i * 100}" for i in range(QUESTIONS)]
 
     handle1, handle2 = db.get_handle(match_info.guild, match_info.p1_id), db.get_handle(match_info.guild,
                                                                                         match_info.p2_id)

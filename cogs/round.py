@@ -12,11 +12,11 @@ from utils import cf_api, discord_, codeforces, updation, elo, tournament_helper
 from constants import AUTO_UPDATE_TIME, ADMIN_PRIVILEGE_ROLES
 
 
-MAX_ROUND_USERS = 5
+MAX_ROUND_USERS = 10
 LOWER_RATING = 800
 UPPER_RATING = 3600
-MATCH_DURATION = [5, 180]
-MAX_PROBLEMS = 6
+MATCH_DURATION = [5, 300]
+MAX_PROBLEMS = 10
 MAX_ALTS = 5
 ROUNDS_PER_PAGE = 5
 
@@ -35,7 +35,7 @@ class Round(commands.Cog):
         for cmd in match.commands:
             desc += f"`{cmd.name}`: **{cmd.brief}**\n"
         embed = discord.Embed(description=desc, color=discord.Color.dark_magenta())
-        embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar_url)
+        embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar.url)
         embed.set_footer(
             text="Use the prefix . before each command. For detailed usage about a particular command, type .help match <command>")
         embed.add_field(name="GitHub repository", value=f"[GitHub](https://github.com/pseudocoder10/Lockout-Bot)",
@@ -513,5 +513,5 @@ class Round(commands.Cog):
         await ctx.send(embed=discord_.round_problems_embed(round_info))
 
 
-def setup(client):
-    client.add_cog(Round(client))
+async def setup(client):
+    await client.add_cog(Round(client))

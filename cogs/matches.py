@@ -18,11 +18,12 @@ from constants import BOT_INVITE, GITHUB_LINK, SERVER_INVITE, ADMIN_PRIVILEGE_RO
 
 LOWER_RATING = 800
 UPPER_RATING = 3600
-MATCH_DURATION = [5, 180]
+MATCH_DURATION = [5, 300]
 RESPONSE_WAIT_TIME = 30
 ONGOING_PER_PAGE = 10
 RECENT_PER_PAGE = 5
-
+RANGE = 400
+QUESTIONS = 5
 
 async def plot_graph(ctx, data, handle):
     x_axis, y_axis = [], []
@@ -52,7 +53,7 @@ async def plot_graph(ctx, data, handle):
     plt.close()
     embed = Embed(title="Match rating for for %s" % handle, color=Color.blue())
     embed.set_image(url="attachment://plot.png")
-    embed.set_footer(text="Requested by " + str(ctx.author), icon_url=ctx.author.avatar_url)
+    embed.set_footer(text="Requested by " + str(ctx.author), icon_url=ctx.author.avatar.url)
     await ctx.channel.send(embed=embed, file=discord_file)
 
 
@@ -86,7 +87,7 @@ class Matches(commands.Cog):
         for cmd in match.commands:
             desc += f"`{cmd.name}`: **{cmd.brief}**\n"
         embed = discord.Embed(description=desc, color=discord.Color.dark_magenta())
-        embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar_url)
+        embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar.url)
         embed.set_footer(
             text="Use the prefix . before each command. For detailed usage about a particular command, type .help match <command>")
         embed.add_field(name="GitHub repository", value=f"[GitHub]({GITHUB_LINK})",
@@ -119,8 +120,8 @@ class Matches(commands.Cog):
         if self.db.is_challenging(ctx.guild.id, member.id) or self.db.is_challenged(ctx.guild.id, member.id) or self.db.in_a_match(ctx.guild.id, member.id):
             await discord_.send_message(ctx, "Your opponent is already challenging someone/being challenged/in a match. Pls try again later")
             return
-        if rating not in range(LOWER_RATING, UPPER_RATING - 400 + 1):
-            await discord_.send_message(ctx, f"Invalid Rating Range, enter an integer between {LOWER_RATING}-{UPPER_RATING-400}")
+        if rating not in range(LOWER_RATING, UPPER_RATING - RANGE + 1):
+            await discord_.send_message(ctx, f"Invalid Rating Range, enter an integer between {LOWER_RATING}-{UPPER_RATING-RANGE}")
             return
         rating = rating - rating % 100
         resp = await get_time_response(self.client, ctx,
@@ -133,7 +134,7 @@ class Matches(commands.Cog):
         duration = resp[1]
 
         await ctx.send(f"{ctx.author.mention} has challenged {member.mention} to a match with problem ratings from "
-                       f"{rating} to {rating+400} and lasting {duration} minutes. Type `.match accept` within 60 seconds to accept")
+                       f"{rating} to {rating+RANGE} and lasting {duration} minutes. Type `.match accept` within 60 seconds to accept")
         tme = int(time.time())
         self.db.add_to_challenge(ctx.guild.id, ctx.author.id, member.id, rating, tme, ctx.channel.id, duration)
         await asyncio.sleep(60)
@@ -171,7 +172,7 @@ class Matches(commands.Cog):
         self.db.remove_challenge(ctx.guild.id, ctx.author.id)
 
         handle1, handle2 = self.db.get_handle(ctx.guild.id, data.p1_id), self.db.get_handle(ctx.guild.id, data.p2_id)
-        problems = await codeforces.find_problems([handle1, handle2], [data.rating + i*100 for i in range(0, 5)])
+        problems = await codeforces.find_problems([handle1, handle2], [data.rating + i*100 for i in range(0, QUESTIONS)])
 
         if not problems[0]:
             await discord_.send_message(ctx, problems[1])
@@ -515,5 +516,5 @@ class Matches(commands.Cog):
         await paginator.Paginator(data, ["User", "Rating"], f"Match Ratings", 10).paginate(ctx, self.client)
 
 
-def setup(client):
-    client.add_cog(Matches(client))
+async def setup(client):
+   await client.add_cog(Matches(client))

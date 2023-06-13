@@ -10,12 +10,12 @@ db = dbconn.DbConn()
 cf = cf_api.CodeforcesAPI()
 
 RECENT_SUBS_LIMIT = 50
-
+QUESTIONS = 5
 
 def match_score(status):
     a, b = 0, 0
 
-    for i in range(5):
+    for i in range(QUESTIONS):
         if status[i] == '1':
             a += 100 * (i + 1)
         if status[i] == '2':
@@ -30,7 +30,7 @@ def match_score(status):
 def no_change_possible(match_status):
     a, b = match_score(match_status)
     left = 0
-    for i in range(5):
+    for i in range(QUESTIONS):
         if match_status[i] == '0':
             left += (i + 1) * 100
 
@@ -57,7 +57,7 @@ async def update_match(match_info):
     updates = []
     new_status = ''
 
-    for i in range(5):
+    for i in range(QUESTIONS):
         if match_info.status[i] != '0':
             new_status += match_info.status[i]
             continue
