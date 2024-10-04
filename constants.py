@@ -1,12 +1,21 @@
-AUTO_UPDATE_TIME = 20
+# 連結設定
+SERVER_INVITE = "n"
+BOT_INVITE = ""
+GITHUB_LINK = "https://github.com/pseudocoder10/Lockout-Bot" # 原作 repo 的連結
 
-SERVER_INVITE = "https://discord.gg/xP2UPUn"
-BOT_INVITE = "https://discord.com/oauth2/authorize?client_id=669978762120790045&permissions=0&scope=bot"
-GITHUB_LINK = "https://github.com/pseudocoder10/Lockout-Bot"
-
+# 權限常數設定
 ADMIN_PRIVILEGE_ROLES = ['Admin', 'Moderator', 'Lockout Manager']
-OWNERS = [640102516738097163]
+OWNERS = []
 
-BACKUP_DIR = "./data/backup/"
+# 題目常數設定
+LOWER_RATING = 800
+UPPER_RATING = 3600
+RANGE = 600
+QUESTIONS = 5
 
+# 其他常數設定
+AUTO_UPDATE_TIME = 20 # 記分板更新週期(s)
+MAX_REGISTRANTS = 256 # 最大註冊人數
 
+# 備份資料夾路徑
+BACKUP_DIR = ""

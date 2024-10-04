@@ -8,24 +8,20 @@ import traceback
 
 from discord import Embed, Color, File
 from discord.ext import commands
-from discord.ext.commands import cooldown, BucketType
+from discord.ext.commands import cooldown, BucketType, Context, Bot
 from operator import itemgetter
 from io import BytesIO
 
 from data import dbconn
 from utils import cf_api, paginator, discord_, codeforces, updation, elo
-from constants import BOT_INVITE, GITHUB_LINK, SERVER_INVITE, ADMIN_PRIVILEGE_ROLES, AUTO_UPDATE_TIME
+from constants import BOT_INVITE, GITHUB_LINK, SERVER_INVITE, ADMIN_PRIVILEGE_ROLES, AUTO_UPDATE_TIME, LOWER_RATING, UPPER_RATING, RANGE, QUESTIONS
 
-LOWER_RATING = 800
-UPPER_RATING = 3600
 MATCH_DURATION = [5, 300]
 RESPONSE_WAIT_TIME = 30
 ONGOING_PER_PAGE = 10
 RECENT_PER_PAGE = 5
-RANGE = 400
-QUESTIONS = 5
 
-async def plot_graph(ctx, data, handle):
+async def plot_graph(ctx: Context, data, handle):
     x_axis, y_axis = [], []
     for i in range(0, len(data)):
         x_axis.append(i+1)
@@ -57,7 +53,7 @@ async def plot_graph(ctx, data, handle):
     await ctx.channel.send(embed=embed, file=discord_file)
 
 
-async def get_time_response(client, ctx, message, time, author, range_):
+async def get_time_response(client, ctx: Context, message, time, author, range_):
     await ctx.send(message)
 
     def check(m):
@@ -75,12 +71,12 @@ async def get_time_response(client, ctx, message, time, author, range_):
 
 
 class Matches(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Bot):
         self.client = client
         self.db = dbconn.DbConn()
         self.cf = cf_api.CodeforcesAPI()
 
-    def make_match_embed(self, ctx):
+    def make_match_embed(self, ctx: Context):
         desc = "Information about Matches related commands! **[use .match <command>]**\n\n"
         match = self.client.get_command('match')
 
@@ -100,11 +96,11 @@ class Matches(commands.Cog):
         return embed
 
     @commands.group(brief='Commands related to matches. Type .match for more details', invoke_without_command=True)
-    async def match(self, ctx):
+    async def match(self, ctx: Context):
         await ctx.send(embed=self.make_match_embed(ctx))
 
     @match.command(brief="Challenge someone to a match")
-    async def challenge(self, ctx, member:discord.Member, rating: int):
+    async def challenge(self, ctx: Context, member: discord.Member, rating: int):
         if member.id == ctx.author.id:
             await discord_.send_message(ctx, "You cannot challenge yourself!!")
             return
@@ -143,7 +139,7 @@ class Matches(commands.Cog):
             self.db.remove_challenge(ctx.guild.id, ctx.author.id)
 
     @match.command(brief="Withdraw your challenge")
-    async def withdraw(self, ctx):
+    async def withdraw(self, ctx: Context):
         if not self.db.is_challenging(ctx.guild.id, ctx.author.id):
             await discord_.send_message(ctx, "You are not challenging anyone")
             return
@@ -151,7 +147,7 @@ class Matches(commands.Cog):
         await ctx.send(f"Challenge by {ctx.author.mention} has been removed")
 
     @match.command(brief="Decline a challenge")
-    async def decline(self, ctx):
+    async def decline(self, ctx: Context):
         if not self.db.is_challenged(ctx.guild.id, ctx.author.id):
             await discord_.send_message(ctx, "No-one is challenging you")
             return
@@ -159,7 +155,7 @@ class Matches(commands.Cog):
         await ctx.send(f"Challenge to {ctx.author.mention} has been removed")
 
     @match.command(brief="Accept a challenge")
-    async def accept(self, ctx):
+    async def accept(self, ctx: Context):
         if not self.db.is_challenged(ctx.guild.id, ctx.author.id):
             await discord_.send_message(ctx, "No-one is challenging you")
             return
@@ -185,7 +181,7 @@ class Matches(commands.Cog):
         await ctx.send(embed=discord_.match_problems_embed(match_info))
     
     @match.command(brief="Invalidate a match (Admin/Mod/Lockout Manager only)")
-    async def _invalidate(self, ctx, member: discord.Member):
+    async def _invalidate(self, ctx: Context, member: discord.Member):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -197,7 +193,7 @@ class Matches(commands.Cog):
         await ctx.send(embed=discord.Embed(description="Match has been invalidated", color=discord.Color.green()))
 
     @match.command(brief="Invalidate your match", aliases=["forfeit", "cancel"])
-    async def invalidate(self, ctx):
+    async def invalidate(self, ctx: Context):
         if not self.db.in_a_match(ctx.guild.id, ctx.author.id):
             await discord_.send_message(ctx, f"User {ctx.author.mention} is not in a match.")
             return
@@ -213,7 +209,7 @@ class Matches(commands.Cog):
             await ctx.send(f"{ctx.author.mention} your opponent didn't respond in time")
 
     @match.command(brief="Draw your current match")
-    async def draw(self, ctx):
+    async def draw(self, ctx: Context):
         if not self.db.in_a_match(ctx.guild.id, ctx.author.id):
             await discord_.send_message(ctx, f"User {ctx.author.mention} is not in a match.")
             return
@@ -257,7 +253,7 @@ class Matches(commands.Cog):
             await ctx.send(f"{ctx.author.mention} your opponent didn't respond in time")
 
     @match.command(brief="Display ongoing matches")
-    async def ongoing(self, ctx):
+    async def ongoing(self, ctx: Context):
         data = self.db.get_all_matches(ctx.guild.id)
         if len(data) == 0:
             await discord_.send_message(ctx, "No ongoing matches")
@@ -305,7 +301,7 @@ class Matches(commands.Cog):
                 break
 
     @match.command(brief="Show recent matches")
-    async def recent(self, ctx, member: discord.Member=None):
+    async def recent(self, ctx: Context, member: discord.Member=None):
         data = self.db.get_recent_matches(ctx.guild.id, member.id if member else None)
         if len(data) == 0:
             await discord_.send_message(ctx, "No recent matches")
@@ -356,7 +352,7 @@ class Matches(commands.Cog):
                 break
 
     @match.command(brief="Show problems left from someone's ongoing match")
-    async def problems(self, ctx, member: discord.Member=None):
+    async def problems(self, ctx: Context, member: discord.Member=None):
         if member is None:
             member = ctx.author
         if not self.db.in_a_match(ctx.guild.id, member.id):
@@ -366,7 +362,7 @@ class Matches(commands.Cog):
 
     @match.command(brief="Update matches status for the server")
     @cooldown(1, AUTO_UPDATE_TIME, BucketType.guild)
-    async def update(self, ctx):
+    async def update(self, ctx: Context):
         await ctx.send(embed=discord.Embed(description=f"Updating matches for this server", color=discord.Color.green()))
 
         matches = self.db.get_all_matches(ctx.guild.id)
@@ -422,73 +418,8 @@ class Matches(commands.Cog):
                 logging_channel = await self.client.fetch_channel(os.environ.get("LOGGING_CHANNEL"))
                 await logging_channel.send(f"Error while updating matches: {str(traceback.format_exc())}")
 
-    # @match.command(brief="View someone's profile")
-    # async def profile(self, ctx, member: discord.Member=None):
-    #     if member is None:
-    #         member = ctx.author
-    #     if not self.db.get_handle(ctx.guild.id, member.id):
-    #         await discord_.send_message(ctx, f"User {member.mention} has not set their handle")
-    #         return
-    #     data = self.db.get_profile(ctx.guild.id, member.id)
-    #     wins, loss, draw = 0, 0, 0
-    #     handle = self.db.get_handle(ctx.guild.id, member.id)
-    #     distrib = [0, 0, 0, 0, 0]
-    #     points = 0
-    #     n = len(data)
-    #     fastest, rate = 1000000000, 0
-    #
-    #     for x in data:
-    #         if x[1] == member.id:
-    #             if x[6] in [1, 3]:
-    #                 wins += 1
-    #                 if x[4] < fastest:
-    #                     fastest = x[4]
-    #                     rate = x[3]
-    #             if x[6] in [2, 4]:
-    #                 loss += 1
-    #             if x[6] == 0:
-    #                 draw += 1
-    #             for i in range(0, 5):
-    #                 if x[5][i] == '1':
-    #                     distrib[i] += 1
-    #                     points += (i+1)*100
-    #         else:
-    #             if x[6] in [2, 4]:
-    #                 wins += 1
-    #                 if x[4] < fastest:
-    #                     fastest = x[4]
-    #                     rate = x[3]
-    #             if x[6] in [1, 3]:
-    #                 loss += 1
-    #             if x[6] == 0:
-    #                 draw += 1
-    #             for i in range(0, 5):
-    #                 if x[5][i] == '2':
-    #                     distrib[i] += 1
-    #                     points += (i+1)*100
-    #
-    #     fast = ""
-    #     av = 0
-    #     if n !=0:
-    #         av = points/n
-    #     if fastest == 1000000000:
-    #         fast = "NIL"
-    #     else:
-    #         fast = f"{int(fastest/60)}m {fastest%60}s [{rate} Rating]"
-    #
-    #     embed = discord.Embed(description=f"Profile for user {member.mention}", color=discord.Color.dark_blue())
-    #     embed.add_field(name="Handle", value=f"[{handle}](https://codeforces.com/profile/{handle})", inline=False)
-    #     embed.add_field(name="Wins", value=str(wins), inline=True)
-    #     embed.add_field(name="Draws", value=str(draw), inline=True)
-    #     embed.add_field(name="Losses", value=str(loss), inline=True)
-    #     embed.add_field(name="Problem Points", value="100\n200\n300\n400\n500", inline=True)
-    #     embed.add_field(name="Times Solved", value=f"{distrib[0]}\n{distrib[1]}\n{distrib[2]}\n{distrib[3]}\n{distrib[4]}\n", inline=True)
-    #     embed.add_field(name="Average Points", value=f"{int(av)}", inline=False)
-    #     embed.add_field(name="Fastest Time", value=fast, inline=True)
-    #     await ctx.send(embed=embed)
-
     @match.command(brief="Plot match rating")
-    async def rating(self, ctx, member: discord.Member=None):
+    async def rating(self, ctx: Context, member: discord.Member=None):
         if member is None:
             member = ctx.author
         data = self.db.get_match_rating(ctx.guild.id, member.id)
@@ -516,5 +447,5 @@ class Matches(commands.Cog):
         await paginator.Paginator(data, ["User", "Rating"], f"Match Ratings", 10).paginate(ctx, self.client)
 
 
-async def setup(client):
+async def setup(client: Bot):
    await client.add_cog(Matches(client))

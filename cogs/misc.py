@@ -2,6 +2,7 @@ import discord
 import time
 
 from discord.ext import commands
+from discord.ext.commands import Bot, Context
 from humanfriendly import format_timespan as timeez
 from psutil import Process, virtual_memory
 
@@ -11,13 +12,13 @@ from constants import OWNERS, SERVER_INVITE, BOT_INVITE, GITHUB_LINK
 
 
 class Misc(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Bot):
         self.client = client
         self.db = dbconn.DbConn()
         self.uptime = int(time.time())
 
     @commands.command(name="updateratings", hidden=True)
-    async def updateratings(self, ctx):
+    async def updateratings(self, ctx: Context):
         if ctx.author.id not in OWNERS:
             return
         await ctx.send(embed=discord.Embed(description="Updating ratings", color=discord.Color.green()))
@@ -25,7 +26,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=discord.Embed(description="Ratings updated", color=discord.Color.green()))
 
     @commands.command(name="update_db", hidden=True)
-    async def updatedb(self, ctx):
+    async def updatedb(self, ctx: Context):
         if ctx.author.id not in OWNERS:
             return
         await ctx.send(embed=discord.Embed(description="Updating problemset", color=discord.Color.green()))
@@ -33,7 +34,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=discord.Embed(description="Problemset updated", color=discord.Color.green()))
 
     @commands.command(name="backup", hidden=True)
-    async def backup(self, ctx):
+    async def backup(self, ctx: Context):
         if ctx.author.id not in OWNERS:
             return
         await ctx.send(embed=discord.Embed(description="Taking backup", color=discord.Color.green()))
@@ -41,7 +42,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=discord.Embed(description="Backup taken", color=discord.Color.green()))
 
     @commands.command(name="scrape_", hidden=True)
-    async def scrape_(self, ctx):
+    async def scrape_(self, ctx: Context):
         if ctx.author.id not in OWNERS:
             return
         await ctx.send(embed=discord.Embed(description="Scraping problem author list", color=discord.Color.green()))
@@ -49,7 +50,7 @@ class Misc(commands.Cog):
         await ctx.send(embed=discord.Embed(description="Done", color=discord.Color.green()))
 
     @commands.command()
-    async def botinfo(self, ctx):
+    async def botinfo(self, ctx: Context):
         handles = self.db.get_count('handles')
         matches = self.db.get_count('finished') 
         rounds = self.db.get_count('finished_rounds')
@@ -81,5 +82,5 @@ class Misc(commands.Cog):
         await ctx.send(embed=embed)
 
 
-async def setup(client):
+async def setup(client: Bot):
     await client.add_cog(Misc(client))

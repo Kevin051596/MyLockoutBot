@@ -5,7 +5,7 @@ import math
 
 from humanfriendly import format_timespan as timeez
 
-from constants import ADMIN_PRIVILEGE_ROLES
+from constants import ADMIN_PRIVILEGE_ROLES, QUESTIONS
 from utils.updation import match_score, round_score
 from utils import updation, cf_api
 from data import dbconn
@@ -13,7 +13,6 @@ from data import dbconn
 
 db = dbconn.DbConn()
 cf = cf_api.CodeforcesAPI()
-QUESTIONS = 5
 
 
 class DummyUser:
@@ -150,6 +149,27 @@ async def get_problems_response(client, ctx, message, time, length, author):
     except asyncio.TimeoutError:
         await original.delete()
         return [False]
+    
+
+def single_problems_embed(single_info):
+    print(single_info.problems)
+    problems = single_info.problems.split()
+
+    names = [f"[{db.get_problems(problems[i])[0].name}](https://codeforces.com/contest/{problems[i].split('/')[0]}"
+             f"/problem/{problems[i].split('/')[1]})" if single_info.status[i] == '0' else "This problem has been solved"
+             for i in range(QUESTIONS)]
+    rating = [f"{single_info.rating + i * 100}" for i in range(QUESTIONS)]
+
+    handle = db.get_handle(single_info.guild, single_info.p1_id)
+
+    embed = discord.Embed(description=f"[{handle}](https://codeforces.com/profile/{handle})",
+                          color=discord.Color.green())
+
+    embed.set_author(name=f"Problems")
+    embed.add_field(name="Problem Name", value='\n'.join(names), inline=True)
+    embed.add_field(name="Rating", value='\n'.join(rating), inline=True)
+
+    return embed
 
 
 def match_problems_embed(match_info):

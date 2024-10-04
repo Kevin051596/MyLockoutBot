@@ -16,3 +16,12 @@ The public bot will no longer function properly. The GitHub repository is also a
 
 * The bot is inspired from [TLE](https://github.com/cheran-senthil/TLE) discord bot and [Lockout streams](https://www.youtube.com/watch?v=bBNIIg8REUU&feature=youtu.be) by [ecnerwala](https://codeforces.com/profile/ecnerwala) and [scott_wu](https://codeforces.com/profile/scott_wu) 
 * Elo rating system has been implemented from [FigBug/Multiplayer-ELO](https://github.com/FigBug/Multiplayer-ELO)
+
+## .env 環境變數配置
+```
+DB_NAME=                    # database 名稱
+DB_USERNAME=                # database 使用者名稱
+DB_PASSWORD=                # database 密碼
+LOCKOUT_BOT_TOKEN=          # 機器人 Token
+LOGGING_CHANNEL=            # 使用頻道 ID
+```

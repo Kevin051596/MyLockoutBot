@@ -22,13 +22,13 @@ logging_channel = None
 
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game(name="瘋狂程設"))
+    await client.change_presence(activity=discord.Game(name="Lockout"))
     global logging_channel
     logging_channel = await client.fetch_channel(os.environ.get("LOGGING_CHANNEL"))
     await logging_channel.send(f"Bot ready")
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(update, 'interval', seconds=AUTO_UPDATE_TIME, misfire_grace_time=60)
+    # scheduler.add_job(update, 'interval', seconds=AUTO_UPDATE_TIME, misfire_grace_time=60)
     scheduler.add_job(tasks.create_backup, CronTrigger(hour="0, 6, 12, 18", timezone="Asia/Kolkata"), [client])
     scheduler.add_job(tasks.update_ratings, CronTrigger(hour="3", timezone="Asia/Kolkata"), [client])
     scheduler.add_job(tasks.update_problemset, CronTrigger(hour="6", timezone="Asia/Kolkata"), [client])
@@ -84,6 +84,7 @@ async def on_command_error(ctx: discord.ext.commands.Context, error: Exception):
 
 
 async def main():
+   
     for filename in os.listdir('./cogs'):
         if filename.endswith('.py'):
             try:

@@ -6,7 +6,7 @@ import string
 from discord import Embed, Color
 from discord.ext import commands
 from operator import itemgetter
-from discord.ext.commands import cooldown, BucketType, CommandOnCooldown
+from discord.ext.commands import cooldown, BucketType, CommandOnCooldown, Context, Bot
 
 from data import dbconn
 from utils import cf_api, paginator, discord_
@@ -31,12 +31,12 @@ cf_colors = {
 
 
 class Handles(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Bot):
         self.client = client
         self.db = dbconn.DbConn()
         self.cf = cf_api.CodeforcesAPI()
 
-    def make_handle_embed(self, ctx):
+    def make_handle_embed(self, ctx: Context):
         desc = "Information about Handle related commands! **[use .handle <command>]**\n\n"
         handle = self.client.get_command('handle')
         print("hi")
@@ -56,11 +56,11 @@ class Handles(commands.Cog):
         return embed
 
     @commands.group(brief='Commands related to handles! Type .handle for more details', invoke_without_command=True)
-    async def handle(self, ctx):
+    async def handle(self, ctx: Context):
         await ctx.send(embed=self.make_handle_embed(ctx))
 
     @handle.command(brief="Set someone's handle (Admin/Mod/Lockout Manager only)")
-    async def set(self, ctx, member: discord.Member, handle: str):
+    async def set(self, ctx: Context, member: discord.Member, handle: str):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -101,7 +101,7 @@ class Handles(commands.Cog):
         await ctx.send(embed=embed)
 
     @handle.command(brief="Remove someone's handle (Admin/Mod/Lockout Manager only)")
-    async def remove(self, ctx, member: discord.Member):
+    async def remove(self, ctx: Context, member: discord.Member):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -119,7 +119,7 @@ class Handles(commands.Cog):
 
     @handle.command(brief="Set your Codeforces handle")
     @cooldown(1, HANDLE_IDENTIFY_WAIT_TIME, BucketType.user)
-    async def identify(self, ctx, handle: str):
+    async def identify(self, ctx: Context, handle: str):
         if self.db.get_handle(ctx.guild.id, ctx.author.id):
             await discord_.send_message(ctx, f"Your handle is already set to {self.db.get_handle(ctx.guild.id, ctx.author.id)}, "
                                     f"ask an admin or mod to remove it first and try again.")
@@ -170,7 +170,7 @@ class Handles(commands.Cog):
         await ctx.send(embed=embed)
 
     @identify.error
-    async def identify_error(self, ctx, exc):
+    async def identify_error(self, ctx: Context, exc):
         if isinstance(exc, CommandOnCooldown):
             await ctx.send(embed=discord.Embed(
                 description=f"Slow down!\nThe cooldown of command is **{HANDLE_IDENTIFY_WAIT_TIME}s**, pls retry after "
@@ -178,7 +178,7 @@ class Handles(commands.Cog):
                 color=discord.Color.red()))
 
     @handle.command(brief="Get someone's handle")
-    async def get(self, ctx, member: discord.Member):
+    async def get(self, ctx: Context, member: discord.Member):
         if not self.db.get_handle(ctx.guild.id, member.id):
             await discord_.send_message(ctx, f'Handle for {member.mention} is not set currently')
             return
@@ -205,7 +205,7 @@ class Handles(commands.Cog):
         await ctx.send(embed=embed)
 
     @handle.command(brief="Get handle list")
-    async def list(self, ctx):
+    async def list(self, ctx: Context):
         data = self.db.get_all_handles(ctx.guild.id)
         if len(data) == 0:
             await discord_.send_message(ctx, "No one has set their handle yet")
@@ -222,5 +222,5 @@ class Handles(commands.Cog):
         await paginator.Paginator(data, ["User", "Handle", "Rating"], f"Handle List", HANDLES_PER_PAGE).paginate(ctx, self.client)
 
 
-async def setup(client):
+async def setup(client: Bot):
     await client.add_cog(Handles(client))

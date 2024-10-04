@@ -265,7 +265,3 @@ async def scrape_authors(client):
         await logging_channel.send("Done")
     except Exception as e:
         await logging_channel.send(f"Error while scraping {str(traceback.format_exc())}")
-
-
-
-

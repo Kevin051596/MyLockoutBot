@@ -4,18 +4,15 @@ import os
 import time
 
 from discord.ext import commands
-from discord.ext.commands import BucketType
+from discord.ext.commands import BucketType, Bot, Context
 from humanfriendly import format_timespan as timeez
 
 from data import dbconn
 from utils import challonge_api, paginator, discord_, tournament_helper
-from constants import BOT_INVITE, GITHUB_LINK, SERVER_INVITE, ADMIN_PRIVILEGE_ROLES
-
-MAX_REGISTRANTS = 256
-
+from constants import BOT_INVITE, GITHUB_LINK, SERVER_INVITE, ADMIN_PRIVILEGE_ROLES, MAX_REGISTRANTS
 
 class Tournament(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Bot):
         self.client = client
         self.db = dbconn.DbConn()
         self.api = challonge_api.ChallongeAPI(self.client)
@@ -39,11 +36,11 @@ class Tournament(commands.Cog):
         return embed
 
     @commands.group(brief='Commands related to tournaments! Type .tournament for more details', invoke_without_command=True, aliases=['tourney'])
-    async def tournament(self, ctx):
+    async def tournament(self, ctx: Context):
         await ctx.send(embed=self.make_tournament_embed(ctx))
 
     @tournament.command(name="faq", brief="FAQ")
-    async def faq(self, ctx):
+    async def faq(self, ctx: Context):
         data = [["What formats are supported?",
                  "The bot currently supports 3 types of formats: Single Elimination, Double Elimination and Swiss"],
                 ["Where will the tournament be held?",
@@ -66,7 +63,7 @@ class Tournament(commands.Cog):
         await ctx.send(embed=embed)
 
     @tournament.command(name="setup", brief="Setup a tournament.")
-    async def setup(self, ctx, tournament_type: int, *, tournament_name: str):
+    async def setup(self, ctx: Context, tournament_type: int, *, tournament_name: str):
         """
         **tournament_name:** Alpha-numeric string (Max 50 characters)
         **tournament_type:** Integer (0: single elimination, 1: double elimination, 2: swiss)
@@ -102,7 +99,7 @@ class Tournament(commands.Cog):
         await ctx.send(embed=embed)
 
     @tournament.command(name="register", brief="Register for the tournament")
-    async def register(self, ctx):
+    async def register(self, ctx: Context):
         tournament_info = self.db.get_tournament_info(ctx.guild.id)
         if not tournament_info:
             await discord_.send_message(ctx, "There is no ongoing tournament in the server currently")
@@ -131,7 +128,7 @@ class Tournament(commands.Cog):
                                            color=discord.Color.green()))
 
     @tournament.command(name="unregister", brief="Unregister from the tournament")
-    async def unregister(self, ctx):
+    async def unregister(self, ctx: Context):
         tournament_info = self.db.get_tournament_info(ctx.guild.id)
         if not tournament_info:
             await discord_.send_message(ctx, "There is no ongoing tournament in the server currently")
@@ -150,7 +147,7 @@ class Tournament(commands.Cog):
             color=discord.Color.green()))
 
     @tournament.command(name="_unregister", brief="Forcefully unregister someone from the tournament")
-    async def _unregister(self, ctx, *, handle: str):
+    async def _unregister(self, ctx: Context, *, handle: str):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -173,7 +170,7 @@ class Tournament(commands.Cog):
             color=discord.Color.green()))
 
     @tournament.command(name="registrants", brief="View the list of users who have registered the tournament")
-    async def registrants(self, ctx):
+    async def registrants(self, ctx: Context):
         registrants = self.db.get_registrants(ctx.guild.id)
         if not registrants:
             await discord_.send_message(ctx, "No registrations yet")
@@ -182,7 +179,7 @@ class Tournament(commands.Cog):
         await paginator.Paginator([[str(i+1), registrants[i].handle, str(registrants[i].rating)] for i in range(len(registrants))], ["S No.", "Handle", "Rating"], "Registrants for the Lockout tournament", 15).paginate(ctx, self.client)
 
     @tournament.command(name="info", brief="Get basic information about the tournament")
-    async def info(self, ctx):
+    async def info(self, ctx: Context):
         tournament_info = self.db.get_tournament_info(ctx.guild.id)
         if not tournament_info:
             await discord_.send_message(ctx, "There is no ongoing tournament in the server currently")
@@ -200,7 +197,7 @@ class Tournament(commands.Cog):
 
     @tournament.command(name="begin", brief="Begin the tournament", aliases=['start'])
     @commands.cooldown(1, 120, BucketType.guild)
-    async def begin(self, ctx):
+    async def begin(self, ctx: Context):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -303,7 +300,7 @@ class Tournament(commands.Cog):
             await ctx.send(embed=embed)
 
     @tournament.command(name="delete", brief="Delete the tournament")
-    async def delete_(self, ctx):
+    async def delete_(self, ctx: Context):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx,
                                         f"{ctx.author.mention} you require 'manage server' permission or one of the "
@@ -323,7 +320,7 @@ class Tournament(commands.Cog):
 
     @tournament.command(name="matches", brief="View the tournament matches")
     @commands.cooldown(1, 10, BucketType.user)
-    async def matches(self, ctx):
+    async def matches(self, ctx: Context):
         tournament_info = self.db.get_tournament_info(ctx.guild.id)
 
         if not tournament_info:
@@ -358,7 +355,7 @@ class Tournament(commands.Cog):
 
     @tournament.command(name="forcewin", brief="Grant victory to a user without them competing")
     @commands.cooldown(1, 10, BucketType.user)
-    async def forcewin(self, ctx, *, handle: str):
+    async def forcewin(self, ctx: Context, *, handle: str):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -434,7 +431,7 @@ class Tournament(commands.Cog):
 
     @tournament.command(name="forcedraw", brief="Force draw a match (Swiss only)")
     @commands.cooldown(1, 10, BucketType.user)
-    async def forcedraw(self, ctx, *, handle: str):
+    async def forcedraw(self, ctx: Context, *, handle: str):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx,
                                         f"{ctx.author.mention} you require 'manage server' permission or one of the "
@@ -518,7 +515,7 @@ class Tournament(commands.Cog):
 
     @tournament.command(name="match_invalidate", brief="Invalidate the results of a match", aliases=['invalidate_match'])
     @commands.cooldown(1, 10, BucketType.user)
-    async def match_invalidate(self, ctx, idx: int):
+    async def match_invalidate(self, ctx: Context, idx: int):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx,
                                         f"{ctx.author.mention} you require 'manage server' permission or one of the "
@@ -558,7 +555,7 @@ class Tournament(commands.Cog):
             await discord_.send_message(ctx, f"Couldn't find match number `{idx}`")
 
     @tournament.command(name="recent", brief="View list of recent tournaments")
-    async def recent(self, ctx):
+    async def recent(self, ctx: Context):
         data = self.db.get_recent_tournaments(ctx.guild.id)
 
         if not data:
@@ -573,5 +570,5 @@ class Tournament(commands.Cog):
         await discord_.content_pagination(content, self.client, 10, "Recent tournaments", ctx, discord.Color.dark_purple())
 
 
-async def setup(client):
+async def setup(client: Bot):
     await client.add_cog(Tournament(client))

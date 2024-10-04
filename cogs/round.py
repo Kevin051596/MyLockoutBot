@@ -5,7 +5,7 @@ import math
 import traceback
 
 from discord.ext import commands
-from discord.ext.commands import cooldown, BucketType
+from discord.ext.commands import cooldown, BucketType, Bot, Context
 
 from data import dbconn
 from utils import cf_api, discord_, codeforces, updation, elo, tournament_helper, challonge_api
@@ -22,13 +22,13 @@ ROUNDS_PER_PAGE = 5
 
 
 class Round(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Bot):
         self.client = client
         self.db = dbconn.DbConn()
         self.cf = cf_api.CodeforcesAPI()
         self.api = challonge_api.ChallongeAPI(self.client)
 
-    def make_round_embed(self, ctx):
+    def make_round_embed(self, ctx: Context):
         desc = "Information about Matches related commands! **[use .round <command>]**\n\n"
         match = self.client.get_command('round')
 
@@ -48,11 +48,11 @@ class Round(commands.Cog):
         return embed
 
     @commands.group(brief='Commands related to rounds! Type .round for more details', invoke_without_command=True)
-    async def round(self, ctx):
+    async def round(self, ctx: Context):
         await ctx.send(embed=self.make_round_embed(ctx))
 
     @round.command(name="challenge", brief="Challenge multiple users to a round")
-    async def challenge(self, ctx, *users: discord.Member):
+    async def challenge(self, ctx: Context, *users: discord.Member):
         users = list(set(users))
         if len(users) == 0:
             await discord_.send_message(ctx, f"The correct usage is `.round challenge @user1 @user2...`")
@@ -163,7 +163,7 @@ class Round(commands.Cog):
         await ctx.send(embed=discord_.round_problems_embed(round_info))
 
     @round.command(name="ongoing", brief="View ongoing rounds")
-    async def ongoing(self, ctx):
+    async def ongoing(self, ctx: Context):
         data = self.db.get_all_rounds(ctx.guild.id)
 
         content = discord_.ongoing_rounds_embed(data)
@@ -215,7 +215,7 @@ class Round(commands.Cog):
                 break
 
     @round.command(brief="Invalidate a round (Admin/Mod/Lockout Manager only)")
-    async def _invalidate(self, ctx, member: discord.Member):
+    async def _invalidate(self, ctx: Context, member: discord.Member):
         if not discord_.has_admin_privilege(ctx):
             await discord_.send_message(ctx, f"{ctx.author.mention} you require 'manage server' permission or one of the "
                                     f"following roles: {', '.join(ADMIN_PRIVILEGE_ROLES)} to use this command")
@@ -313,7 +313,7 @@ class Round(commands.Cog):
 #
     @round.command(brief="Update matches status for the server")
     @cooldown(1, AUTO_UPDATE_TIME, BucketType.guild)
-    async def update(self, ctx):
+    async def update(self, ctx: Context):
         await ctx.send(embed=discord.Embed(description="Updating rounds for this server", color=discord.Color.green()))
         rounds = self.db.get_all_rounds(ctx.guild.id)
 
@@ -403,7 +403,7 @@ class Round(commands.Cog):
                 await logging_channel.send(f"Error while updating rounds: {str(traceback.format_exc())}")
 
     @round.command(name="problems", brief="View problems of a round")
-    async def problems(self, ctx, member: discord.Member=None):
+    async def problems(self, ctx: Context, member: discord.Member=None):
         if not member:
             member = ctx.author
         if not self.db.in_a_round(ctx.guild.id, member.id):
@@ -414,7 +414,7 @@ class Round(commands.Cog):
         await ctx.send(embed=discord_.round_problems_embed(round_info))
 
     @round.command(name="custom", brief="Challenge to a round with custom problemset")
-    async def custom(self, ctx, *users: discord.Member):
+    async def custom(self, ctx: Context, *users: discord.Member):
         users = list(set(users))
         if len(users) == 0:
             await discord_.send_message(ctx, f"The correct usage is `.round custom @user1 @user2...`")
@@ -513,5 +513,5 @@ class Round(commands.Cog):
         await ctx.send(embed=discord_.round_problems_embed(round_info))
 
 
-async def setup(client):
+async def setup(client: Bot):
     await client.add_cog(Round(client))

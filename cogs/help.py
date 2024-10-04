@@ -1,17 +1,16 @@
 import discord
-
 from discord.ext import commands
-from discord.ext.commands import BucketType
+from discord.ext.commands import BucketType, Context, Bot
 
 from constants import SERVER_INVITE, BOT_INVITE, GITHUB_LINK
 
 
 class Help(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Bot):
         self.client = client
         self.client.remove_command("help")
 
-    def make_help_embed(self, ctx):
+    def make_help_embed(self, ctx: Context):
         headers = "Information about commands are given below!\nFor general information about the bot,  type `.botinfo`\nThe bot is public so you can invite it to your own server by clicking [here](https://discord.com/oauth2/authorize?client_id=669978762120790045&permissions=0&scope=bot)"
         handle = self.client.get_command('handle')
         match = self.client.get_command('match')
@@ -45,7 +44,7 @@ class Help(commands.Cog):
         embeds = []
         for desc in content:
             embed = discord.Embed(description=headers + desc + footers, color=discord.Color.dark_magenta())
-            embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar_url)
+            embed.set_author(name="Lockout commands help", icon_url=ctx.me.avatar)
             embed.set_footer(
                 text="Use the prefix . before each command. For detailed usage about a particular command, type .help <command>")
             embed.add_field(name="GitHub repository", value=f"[GitHub]({GITHUB_LINK})",
@@ -75,7 +74,7 @@ class Help(commands.Cog):
 
     @commands.command(name="help")
     @commands.cooldown(1, 5, BucketType.user)
-    async def help(self, ctx, *, cmd: str=None):
+    async def help(self, ctx: Context, *, cmd: str=None):
         """Shows help for various commands"""
         if cmd is None:
             embeds = self.make_help_embed(ctx)
@@ -104,6 +103,5 @@ class Help(commands.Cog):
                 return
             await ctx.send(embed=self.make_cmd_embed(command))
 
-
-async def setup(client):
+async def setup(client: Bot):
     await client.add_cog(Help(client))
